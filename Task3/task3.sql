@@ -10,14 +10,14 @@ GO
 USE fuel_mgmt;
 GO
 
-/* ================== DROP TABLES (if re-run) ================== */
+/* ====================== DROP TABLES (if re-run) ====================== */
 IF OBJECT_ID('dbo.giao_dich','U') IS NOT NULL DROP TABLE dbo.giao_dich;
 IF OBJECT_ID('dbo.tru_bom','U')   IS NOT NULL DROP TABLE dbo.tru_bom;
 IF OBJECT_ID('dbo.hang_hoa','U')  IS NOT NULL DROP TABLE dbo.hang_hoa;
 IF OBJECT_ID('dbo.tram_xang','U') IS NOT NULL DROP TABLE dbo.tram_xang;
 GO
 
-/* ================== TABLES ================== */
+/* ======================= TABLES ============================= */
 -- TRẠM XĂNG
 CREATE TABLE dbo.tram_xang (
   station_id BIGINT IDENTITY(1,1) PRIMARY KEY,
@@ -91,7 +91,7 @@ CREATE TABLE dbo.giao_dich (
 );
 GO
 
-/* ================== INDEXES ================== */
+/* ====================== INDEXES ======================= */
 CREATE INDEX IX_gd_time     ON dbo.giao_dich (tx_time);
 CREATE INDEX IX_gd_station  ON dbo.giao_dich (station_id, tx_time);
 CREATE INDEX IX_gd_goods    ON dbo.giao_dich (goods_id, tx_time);
@@ -221,14 +221,203 @@ BEGIN
     ORDER BY total_liters DESC, revenue DESC, gd.goods_id;
 END
 GO
+/* =================== TVP cho danh mục & cấu hình ====================== */
+IF OBJECT_ID('dbo.sp_ingest_tx_batch','P') IS NOT NULL DROP PROCEDURE dbo.sp_ingest_tx_batch;
+IF OBJECT_ID('dbo.sp_upsert_tram_xang','P') IS NOT NULL DROP PROCEDURE dbo.sp_upsert_tram_xang;
+IF OBJECT_ID('dbo.sp_upsert_hang_hoa','P')  IS NOT NULL DROP PROCEDURE dbo.sp_upsert_hang_hoa;
+IF OBJECT_ID('dbo.sp_insert_tru_bom','P')   IS NOT NULL DROP PROCEDURE dbo.sp_insert_tru_bom;
+IF TYPE_ID('dbo.TT_GiaoDich') IS NOT NULL DROP TYPE dbo.TT_GiaoDich;
+IF TYPE_ID('dbo.TT_TramXang') IS NOT NULL DROP TYPE dbo.TT_TramXang;
+IF TYPE_ID('dbo.TT_HangHoa')  IS NOT NULL DROP TYPE dbo.TT_HangHoa;
+IF TYPE_ID('dbo.TT_TruBom')   IS NOT NULL DROP TYPE dbo.TT_TruBom;
+GO
 
-/* ================== EXAMPLES ================== */
+
+/* ---------- 1) TRẠM XĂNG: upsert theo code ---------- */
+CREATE TYPE dbo.TT_TramXang AS TABLE
+(
+  code     VARCHAR(20)   NOT NULL,     -- khóa nghiệp vụ
+  name     NVARCHAR(255) NOT NULL,
+  address  NVARCHAR(255) NULL,
+  phone    VARCHAR(20)   NULL
+);
+GO
+
+CREATE PROCEDURE dbo.sp_upsert_tram_xang
+  @rows dbo.TT_TramXang READONLY
+AS
+BEGIN
+  SET NOCOUNT ON;
+
+  UPDATE tx
+     SET tx.name    = r.name,
+         tx.address = r.address,
+         tx.phone   = r.phone
+  FROM dbo.tram_xang AS tx
+  JOIN @rows AS r
+    ON r.code = tx.code;
+
+  -- Insert các trạm chưa có
+  INSERT INTO dbo.tram_xang(code, name, address, phone)
+  SELECT r.code, r.name, r.address, r.phone
+  FROM @rows AS r
+  WHERE NOT EXISTS (
+    SELECT 1 FROM dbo.tram_xang tx WHERE tx.code = r.code
+  );
+END
+GO
+
+/* 2) HÀNG HÓA: upsert theo code  */
+CREATE TYPE dbo.TT_HangHoa AS TABLE
+(
+  code   VARCHAR(20)   NOT NULL,       -- khóa nghiệp vụ
+  name   NVARCHAR(255) NOT NULL,
+  unit   VARCHAR(10)   NULL,          
+  active BIT           NULL    
+);
+GO
+
+CREATE PROCEDURE dbo.sp_upsert_hang_hoa
+  @rows dbo.TT_HangHoa READONLY
+AS
+BEGIN
+  SET NOCOUNT ON;
+
+  -- Update theo code (giữ nguyên nếu giá trị đầu vào NULL)
+  UPDATE hh
+     SET hh.name   = r.name,
+         hh.unit   = COALESCE(r.unit,   hh.unit),
+         hh.active = COALESCE(r.active, hh.active)
+  FROM dbo.hang_hoa AS hh
+  JOIN @rows AS r
+    ON r.code = hh.code;
+
+  -- Insert mới (áp dụng default nếu NULL)
+  INSERT INTO dbo.hang_hoa(code, name, unit, active)
+  SELECT r.code,
+         r.name,
+         COALESCE(r.unit,   'L'),
+         COALESCE(r.active, 1)
+  FROM @rows AS r
+  WHERE NOT EXISTS (
+    SELECT 1 FROM dbo.hang_hoa hh WHERE hh.code = r.code
+  );
+END
+GO
+
+/* ---------- 3) TRỤ BƠM: insert theo station_code + pump_no + goods_code ---------- */
+/* 
+    - Mỗi trụ (pump_no trong 1 station) chỉ gán 1 goods ngay từ đầu.
+    - Không cập nhật đổi goods cho trụ đã tồn tại vì có ràng buộc FK tổng hợp ở giao_dich.
+*/
+CREATE TYPE dbo.TT_TruBom AS TABLE
+(
+  station_code VARCHAR(20) NOT NULL,
+  pump_no      INT         NOT NULL,
+  goods_code   VARCHAR(20) NOT NULL,
+  installed_at DATE        NULL
+);
+GO
+
+CREATE PROCEDURE dbo.sp_insert_tru_bom
+  @rows dbo.TT_TruBom READONLY
+AS
+BEGIN
+  SET NOCOUNT ON;
+
+  /* Chỉ INSERT các (station_id, pump_no) chưa tồn tại.
+     Map station_code -> station_id; goods_code -> goods_id.
+  */
+  INSERT INTO dbo.tru_bom (station_id, pump_no, goods_id, installed_at)
+  SELECT s.station_id,
+         r.pump_no,
+         h.goods_id,
+         r.installed_at
+  FROM @rows AS r
+  JOIN dbo.tram_xang AS s
+    ON s.code = r.station_code
+  JOIN dbo.hang_hoa  AS h
+    ON h.code = r.goods_code
+  WHERE NOT EXISTS (
+    SELECT 1
+    FROM dbo.tru_bom pb
+    WHERE pb.station_id = s.station_id
+      AND pb.pump_no    = r.pump_no
+  );
+END
+GO
+
+/* ---------- 4) GIAO DỊCH: upsert theo code ---------- */
+CREATE TYPE dbo.TT_GiaoDich AS TABLE
+(
+  station_code VARCHAR(20)   NOT NULL,               
+  pump_no      INT           NOT NULL,               
+  tx_time      DATETIME2(0)  NOT NULL,              
+  quantity     DECIMAL(12,3) NOT NULL CHECK (quantity > 0),
+  unit_price   DECIMAL(12,2) NOT NULL CHECK (unit_price >= 0)
+);
+GO
+
+-- 2) Proc nhận TVP và đổ vào bảng giao_dich (set-based, 1 round-trip)
+CREATE PROCEDURE dbo.sp_ingest_tx_batch
+  @rows dbo.TT_GiaoDich READONLY
+AS
+BEGIN
+  SET NOCOUNT ON;
+
+  /*  Map theo station_code + pump_no để:
+      - Tự lấy station_id/pump_id/goods_id chính xác từ tru_bom
+      - Luôn thỏa các FK tổng hợp của bảng giao_dich
+  */
+  INSERT INTO dbo.giao_dich (tx_time, station_id, pump_id, goods_id, quantity, unit_price)
+  SELECT r.tx_time, pb.station_id, pb.pump_id, pb.goods_id, r.quantity, r.unit_price
+  FROM @rows AS r
+  JOIN dbo.tram_xang AS s
+    ON s.code = r.station_code
+  JOIN dbo.tru_bom AS pb
+    ON pb.station_id = s.station_id
+   AND pb.pump_no    = r.pump_no;
+END
+GO
+/* ====================== UPSERT=======================*/
+-- 1) Upsert trạm
+DECLARE @stations dbo.TT_TramXang;
+INSERT INTO @stations VALUES
+('S01', N'Trạm Quận 1', N'123 Lê Lợi, Q1', '0909000001'),
+('S02', N'Trạm Quận 7', N'88 Nguyễn Văn Linh, Q7', '0909000002');
+EXEC dbo.sp_upsert_tram_xang @rows = @stations;
+
+-- 2) Upsert hàng hóa
+DECLARE @goods dbo.TT_HangHoa;
+INSERT INTO @goods (code, name, unit, active) VALUES
+('A95', N'Xăng A95', 'L', 1),
+('E5',  N'Xăng E5',  'L', 1),
+('DO',  N'Dầu DO',  'L', 1);
+EXEC dbo.sp_upsert_hang_hoa @rows = @goods;
+
+-- 3) Insert trụ bơm (map theo station_code + pump_no + goods_code)
+DECLARE @pumps dbo.TT_TruBom;
+INSERT INTO @pumps VALUES
+('S01', 1, 'A95', '2024-01-01'),
+('S01', 2, 'E5',  '2024-01-02'),
+('S02', 1, 'DO',  '2024-02-01');
+EXEC dbo.sp_insert_tru_bom @rows = @pumps;
+
+-- 4) Ingest giao dịch theo lô (TVP)
+DECLARE @tx dbo.TT_GiaoDich;
+INSERT INTO @tx VALUES
+('S01', 1, '2025-08-25 09:30:00', 25.5, 23500),
+('S01', 2, '2025-08-25 10:05:00', 18.2, 22000),
+('S02', 1, '2025-08-25 11:10:00', 30.0, 24000);
+EXEC dbo.sp_ingest_tx_batch @rows = @tx;
+
+/* ====================== EXAMPLES ========================*/
 
 -- 1)
 EXEC dbo.sp_get_tx_by_station
      @p_station_id = 1,
-     @p_from = '2024-03-21 00:00:00',
-     @p_to   = '2024-03-23 23:59:59';
+     @p_from = '2025-08-25 00:00:00',
+     @p_to   = '2025-08-26 23:59:59';
 
 -- 2)
 DECLARE @rev DECIMAL(14,2);
@@ -236,7 +425,7 @@ DECLARE @rev DECIMAL(14,2);
 EXEC dbo.sp_daily_revenue_by_pump
      @p_station_id = 1,
      @p_pump_id    = 1,
-     @p_date       = '2025-08-24',
+     @p_date       = '2025-08-25',
      @o_revenue    = @rev OUTPUT;
 
 SELECT @rev AS revenue;
@@ -244,8 +433,8 @@ SELECT @rev AS revenue;
 -- 3)
 DECLARE @rev2 DECIMAL(14,2);
 EXEC dbo.sp_daily_revenue_by_station
-     @p_station_id = 12,
-     @p_date       = '2024-03-21',
+     @p_station_id = 1,
+     @p_date       = '2025-08-25',
      @o_revenue    = @rev2 OUTPUT;
 
 SELECT @rev2 AS revenue;
@@ -253,5 +442,5 @@ SELECT @rev2 AS revenue;
 -- 4)
 EXEC dbo.sp_top3_goods_by_station_month
      @p_station_id = 1,
-     @p_year  = 2024,
-     @p_month = 3;
+     @p_year  = 2025,
+     @p_month = 8;
