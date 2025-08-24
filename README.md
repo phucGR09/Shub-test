@@ -1,5 +1,5 @@
 # Shub Test - Bài Tập Tuyển Dụng
-
+ _Em xin chân thành cảm ơn các anh chị và ban tuyển dụng tại *Shub* đã tạo cơ hội em thực hiện bài kiểm tra này. Chúc anh chị có ngày làm việc hiệu quả và vui vẻ!_ 
 ## Thông Tin Cá Nhân
 
 - **Họ và tên**: [Phan Văn Phúc]
@@ -9,7 +9,7 @@
 
 ## Mô Tả Chung
 
-Repository này chứa các bài tập kỹ thuật được thực hiện trong quá trình tuyển dụng tại Shub. Các bài tập bao gồm frontend development, backend development, database design và thuật toán.
+Repository này chứa các bài tập kỹ thuật được thực hiện trong quá trình tuyển dụng tại Shub. Các bài tập bao gồm frontend development, database design và thuật toán.
 
 ## Cấu Trúc Dự Án
 
