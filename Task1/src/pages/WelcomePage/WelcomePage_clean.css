@@ -1,0 +1,139 @@
+/* Welcome Page Styles - Clean and Minimal */
+.welcome-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.welcome-page__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+}
+
+/* Icon container */
+.welcome-page__icon-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 200px;
+  height: 200px;
+  transform: scale(0);
+  opacity: 0;
+  transition: all 0.8s ease-out;
+}
+
+.welcome-page__icon-container--visible {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* Ripple effects */
+.welcome-page__ripple {
+  position: absolute;
+  border: 2px solid rgba(255, 217, 61, 0.2);
+  border-radius: 50%;
+  animation: ripple 2.5s ease-out infinite;
+}
+
+.welcome-page__ripple--1 {
+  width: 120px;
+  height: 120px;
+  animation-delay: 0s;
+}
+
+.welcome-page__ripple--2 {
+  width: 160px;
+  height: 160px;
+  animation-delay: 0.8s;
+}
+
+.welcome-page__ripple--3 {
+  width: 200px;
+  height: 200px;
+  animation-delay: 1.6s;
+}
+
+/* Main smile icon */
+.welcome-page__main-icon {
+  position: relative;
+  z-index: 2;
+  font-size: 80px;
+  color: #ffd93d;
+  filter: drop-shadow(0 0 15px rgba(255, 217, 61, 0.3));
+}
+
+/* Animation keyframes */
+@keyframes ripple {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .welcome-page__icon-container {
+    width: 150px;
+    height: 150px;
+  }
+
+  .welcome-page__main-icon {
+    font-size: 60px;
+  }
+
+  .welcome-page__ripple--1 {
+    width: 100px;
+    height: 100px;
+  }
+
+  .welcome-page__ripple--2 {
+    width: 130px;
+    height: 130px;
+  }
+
+  .welcome-page__ripple--3 {
+    width: 160px;
+    height: 160px;
+  }
+}
+
+@media (max-width: 480px) {
+  .welcome-page__icon-container {
+    width: 120px;
+    height: 120px;
+  }
+
+  .welcome-page__main-icon {
+    font-size: 50px;
+  }
+
+  .welcome-page__ripple--1 {
+    width: 80px;
+    height: 80px;
+  }
+
+  .welcome-page__ripple--2 {
+    width: 110px;
+    height: 110px;
+  }
+
+  .welcome-page__ripple--3 {
+    width: 140px;
+    height: 140px;
+  }
+}

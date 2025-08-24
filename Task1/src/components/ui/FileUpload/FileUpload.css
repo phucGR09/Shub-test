@@ -1,0 +1,115 @@
+.file-upload {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.file-upload__dropzone {
+  border: 2px dashed var(--color-primary);
+  border-radius: var(--radius-2xl);
+  padding: var(--spacing-3xl);
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  background: var(--color-surface);
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-upload__dropzone:hover {
+  border-color: var(--color-secondary);
+  background: rgba(102, 126, 234, 0.05);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.file-upload__dropzone--active {
+  border-color: var(--color-secondary);
+  background: rgba(102, 126, 234, 0.1);
+  transform: scale(1.02);
+}
+
+.file-upload__dropzone--disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+  border-color: var(--color-text-secondary);
+}
+
+.file-upload__dropzone--disabled:hover {
+  transform: none;
+  background: var(--color-surface);
+  border-color: var(--color-text-secondary);
+}
+
+.file-upload__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.file-upload__icon {
+  font-size: 4rem;
+  margin-bottom: var(--spacing-md);
+}
+
+.file-upload__title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.file-upload__description {
+  margin: 0;
+  max-width: 400px;
+  line-height: 1.6;
+}
+
+.file-upload__note {
+  margin: 0;
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.file-upload__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.file-upload__loading-text {
+  margin: 0;
+}
+
+.file-upload__error {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: rgba(244, 67, 54, 0.1);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.file-upload__error-text {
+  margin: 0;
+  color: #d32f2f;
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .file-upload__dropzone {
+    padding: var(--spacing-xl);
+    min-height: 250px;
+  }
+  
+  .file-upload__icon {
+    font-size: 3rem;
+  }
+  
+  .file-upload__title {
+    font-size: var(--font-size-2xl);
+  }
+}
