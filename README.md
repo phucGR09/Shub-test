@@ -1,5 +1,5 @@
 # Shub Test - Bài Tập Tuyển Dụng
- _Em xin chân thành cảm ơn các anh chị và ban tuyển dụng tại *Shub* đã tạo cơ hội em thực hiện bài kiểm tra này. Chúc anh chị có ngày làm việc hiệu quả và vui vẻ!_ 
+ _Em xin chân thành cảm ơn các anh chị và ban tuyển dụng tại *Shub* đã tạo cơ hội em thực hiện bài kiểm tra này. Em cũng cảm ơn anh chị đã dành thời gian để review bài làm của em. Chúc anh chị có ngày làm việc hiệu quả và vui vẻ!_ 
 ## Thông Tin Cá Nhân
 
 - **Họ và tên**: [Phan Văn Phúc]
@@ -47,5 +47,3 @@ Repository này chứa các bài tập kỹ thuật được thực hiện trong
 - Thêm ROLE chỉ được EXEC proc ingest/report. (task 3)
 
 ---
-
-_Cảm ơn anh chị đã dành thời gian review code của tôi!_
