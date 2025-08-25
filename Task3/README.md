@@ -1,8 +1,6 @@
 # CSDL Quản Lý Trạm Xăng (SQL Server)
 
-## 1. Source Code
-
-### Mục đích### Giải thích các mối liên kết
+### Giải thích các mối liên kết
 
 - **Trạm (1) ──< Trụ (N)** — "Trạm quản lý trụ bơm"
 
@@ -25,9 +23,9 @@
 
 ### Ngôn ngữ
 
-SQL Server / T-SQL (khuyến nghị SQL Server 2019+). Thời gian lưu UTC (SYSUTCDATETIME()).
+SQL Server / T-SQL. Thời gian lưu UTC (SYSUTCDATETIME()).
 
-### Thành phần chính (ngắn gọn)
+### Thành phần chính
 
 #### Bảng
 
