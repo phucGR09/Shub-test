@@ -1,5 +1,7 @@
 # Task 1: Ứng dụng Phân tích Dữ liệu Giao dịch Cây xăng
 
+## DEMO: 
+https://drive.google.com/file/d/1dX4eoHeEPReYCKg71z07hQnjMHS9H4bL/view?usp=sharing
 ## 1. Mục đích dự án
 
 Một ứng dụng web cho việc phân tích dữ liệu giao dịch tại các cây xăng. Ứng dụng giúp người dùng có thể upload file Excel chứa dữ liệu giao dịch, theo dõi thống kê và các chỉ số kinh doanh một cách trực quan và hiệu quả.
