@@ -1,7 +1,8 @@
 # Biểu Mẫu Giao Dịch Trạm Xăng
 
 Ứng dụng React để nhập dữ liệu giao dịch trạm xăng với kiểm tra hợp lệ và giao diện hiện đại.
-
+## DEMO:
+https://drive.google.com/file/d/1ki7X7xaDL3hrW4vIBlYw_LaM1uD-b4GC/view?usp=sharing
 ## Tính Năng
 
 - **Nhập Dữ Liệu Giao Dịch**: Biểu mẫu nhập thông tin giao dịch trạm xăng
